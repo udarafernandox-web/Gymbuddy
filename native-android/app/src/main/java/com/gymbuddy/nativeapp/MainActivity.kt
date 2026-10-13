@@ -103,6 +103,9 @@ class GymApi(private val context: Context) {
         val r=JSONArray(send("/rest/v1/$table?select=*$query",extra=mapOf("Range" to "0-199")))
         (0 until r.length()).map { r.getJSONObject(it) }
     }
+    suspend fun rpc(name: String, arguments: JSONObject = JSONObject()): String = withContext(Dispatchers.IO) {
+        send("/rest/v1/rpc/$name", "POST", arguments.toString())
+    }
     suspend fun insert(table: String, obj: JSONObject): Unit = withContext(Dispatchers.IO) {
         send("/rest/v1/$table","POST",obj.toString(),extra=mapOf("Prefer" to "return=minimal"))
     }
@@ -329,7 +332,7 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
         prs.forEach{ItemCard(it.s("exercise_name"),"${it.n("weight_kg")} kg × ${it.optInt("reps")}") }
         Heading("Friends")
         friends.forEach{ItemCard("Connection",it.s("status"))}
-        Text("Friend invitations, body measurements and goal editing are not yet implemented.",color=muted,fontSize=12.sp)
+        ExtraFeatures(api, run)
         Spacer(Modifier.height(12.dp))
         OutlinedButton(onClick=onLogout){Text("Sign out")}
     }
