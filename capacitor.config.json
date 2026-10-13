@@ -1,0 +1,29 @@
+{
+  "appId": "com.gymbuddypro.app",
+  "appName": "Gym Buddy",
+  "webDir": "www",
+  "server": {
+    "url": "https://gymbuddypro.lovable.app",
+    "androidScheme": "https",
+    "errorPath": "offline.html",
+    "allowNavigation": [
+      "gymbuddypro.lovable.app"
+    ]
+  },
+  "android": {
+    "allowMixedContent": false,
+    "backgroundColor": "#0b0d10"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1200,
+      "backgroundColor": "#0b0d10",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DARK",
+      "backgroundColor": "#0b0d10"
+    }
+  }
+}
