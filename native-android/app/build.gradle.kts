@@ -13,7 +13,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         val url = providers.gradleProperty("supabaseUrl").orElse("https://bvazeseitycybrcopbfs.supabase.co").get()
-        val key = providers.gradleProperty("supabasePublishableKey").orElse("").get()
+        val key = providers.gradleProperty("supabasePublishableKey").orElse("sb_publishable_CO7j0UpNC259wndxcD5_hQ_3Z-NNJSz").get()
         buildConfigField("String", "SUPABASE_URL", "\""+url+"\"")
         buildConfigField("String", "SUPABASE_KEY", "\""+key+"\"")
     }
