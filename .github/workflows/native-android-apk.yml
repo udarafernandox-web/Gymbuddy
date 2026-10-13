@@ -1,0 +1,37 @@
+name: Build Native Gym Buddy
+on:
+  workflow_dispatch:
+  push:
+    branches: [native-development]
+    paths: ['native-android/**', '.github/workflows/native-android-apk.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Compile native debug APK
+        working-directory: native-android
+        env:
+          SUPABASE_KEY: ${{ secrets.GYMBUDDY_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          gradle assembleDebug -PsupabasePublishableKey="$SUPABASE_KEY" --no-daemon
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          sha256sum app/build/outputs/apk/debug/app-debug.apk > native-sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GymBuddy-Native-debug-APK
+          path: |
+            native-android/app/build/outputs/apk/debug/app-debug.apk
+            native-android/native-sha256.txt
+          if-no-files-found: error
