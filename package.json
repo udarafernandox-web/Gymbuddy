@@ -1,0 +1,20 @@
+{
+  "name": "gymbuddy-android-shell",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "android:init": "cap add android",
+    "android:sync": "cap sync android",
+    "android:apk": "cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/app": "^7.1.0",
+    "@capacitor/status-bar": "^7.0.3",
+    "@capacitor/splash-screen": "^7.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.0"
+  }
+}
