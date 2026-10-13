@@ -205,6 +205,7 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
     var sets by remember(workoutId){mutableStateOf<List<JSONObject>>(emptyList())}
     var exercises by remember(workoutId){mutableStateOf<List<JSONObject>>(emptyList())}
     val done=remember(workoutId){mutableStateMapOf<String,Boolean>()}
+    val sessionId = remember(workoutId) { UUID.randomUUID().toString() }
     LaunchedEffect(workoutId) {
         runCatching {
             exercises=api.rows("workout_exercises","&workout_id=eq.$workoutId&order=order_index.asc")
@@ -238,7 +239,7 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
                                     .put("reps", set.optInt("reps"))
                             )
                         }
-                        api.finish(workoutId, entries, 0, UUID.randomUUID().toString())
+                        api.finish(workoutId, entries, 0, sessionId)
                     }
                 },
                 enabled = done.values.any { it }
