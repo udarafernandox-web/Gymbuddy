@@ -114,9 +114,13 @@ class GymApi(private val context: Context) {
         send("/rest/v1/$table?on_conflict=$conflict","POST",obj.toString(),extra=mapOf("Prefer" to "resolution=merge-duplicates,return=minimal"))
     }
     suspend fun finish(workoutId: String, entries: JSONArray, duration: Int, sessionId: String) = withContext(Dispatchers.IO) {
-        val payload=JSONObject().put("p_workout_id",workoutId).put("p_entries",entries).put("p_duration_seconds",duration).put("p_client_session_id",sessionId)
-        // Exact RPC signature must be validated against the existing database before enabling writes.
-        throw UnsupportedOperationException("Native workout completion is locked until finish_workout RPC signature and entry format are verified; your workout draft remains saved.")
+        val workout=rows("workouts","&id=eq.$workoutId").firstOrNull()
+            ?: throw IllegalStateException("Workout not found")
+        val payload=JSONObject().put("_workout_id",workoutId).put("_name",workout.s("name"))
+            .put("_entries",entries).put("_duration_seconds",duration).put("_calories",0)
+            .put("_performed_at",Instant.now().toString()).put("_client_session_id",sessionId)
+        send("/rest/v1/rpc/finish_workout","POST",payload.toString())
+        draftSave("")
     }
 }
 private fun JSONObject.s(key: String) = optString(key).takeUnless { it=="null" } ?: ""
@@ -222,7 +226,7 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
                 }
             }
             Text("Changes stay on this device until saved.",color=muted,fontSize=12.sp)
-            Button(onClick={ {run { val entries=JSONArray();mySets.filter { done[it.s("id")]==true }.forEach {s-> entries.put(JSONObject().put("set_id",s.s("id")).put("weight",s.n("weight_kg")).put("reps",s.optInt("reps"))) };api.finish(workoutId,entries,0,UUID.randomUUID().toString()) }},enabled=done.values.any{it}) {Text("Save completed workout")}
+            Button(onClick={ {run { val entries=JSONArray();mySets.filter { done[it.s("id")]==true }.forEach {s-> entries.put(JSONObject().put("exercise",exercises.firstOrNull{it.s("id")==s.s("workout_exercise_id")}?.s("name")?:"Exercise").put("weight",s.n("weight_kg")).put("reps",s.optInt("reps"))) };api.finish(workoutId,entries,0,UUID.randomUUID().toString()) }},enabled=done.values.any{it}) {Text("Save completed workout")}
             TextButton(onClick=onClose){Text("Close")}
         }
     }
