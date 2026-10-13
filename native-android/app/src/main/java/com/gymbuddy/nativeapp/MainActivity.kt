@@ -106,6 +106,9 @@ class GymApi(private val context: Context) {
     suspend fun rpc(name: String, arguments: JSONObject = JSONObject()): String = withContext(Dispatchers.IO) {
         send("/rest/v1/rpc/$name", "POST", arguments.toString())
     }
+    suspend fun insertReturning(table: String, obj: JSONObject): JSONObject = withContext(Dispatchers.IO) {
+        JSONArray(send("/rest/v1/$table", "POST", obj.toString(), extra = mapOf("Prefer" to "return=representation"))).getJSONObject(0)
+    }
     suspend fun insert(table: String, obj: JSONObject): Unit = withContext(Dispatchers.IO) {
         send("/rest/v1/$table","POST",obj.toString(),extra=mapOf("Prefer" to "return=minimal"))
     }
@@ -162,7 +165,7 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
         Box(Modifier.weight(1f)) {
             when(tab) {
                 0 -> HomePage(api,::run)
-                1 -> TrainPage(api,::run)
+                1 -> TrainNative(api,::run)
                 2 -> LogPage(api,::run)
                 3 -> MePage(api,::run,{api.logout();logged=false;message=""})
             }
