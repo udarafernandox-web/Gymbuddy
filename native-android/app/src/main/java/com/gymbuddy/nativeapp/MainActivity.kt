@@ -61,6 +61,25 @@ class GymApi(private val context: Context) {
     fun logout() { token = ""; userId = ""; refreshToken = "" }
     fun draftGet() = prefs.getString("draft_$userId", "") ?: ""
     fun draftSave(text: String) { prefs.edit().putString("draft_$userId", text).apply() }
+    fun draftDetails(workoutId: String): JSONObject = runCatching {
+        JSONObject(prefs.getString("draft_details_${userId}_$workoutId","{}") ?: "{}")
+    }.getOrDefault(JSONObject())
+    fun saveDraftDetails(workoutId: String, details: JSONObject) {
+        prefs.edit().putString("draft_details_${userId}_$workoutId",details.toString()).apply()
+    }
+    fun sessionUuid(workoutId: String): String {
+        val key="session_uuid_${userId}_$workoutId"
+        val current=prefs.getString(key,null)
+        if(current!=null) return current
+        val id=UUID.randomUUID().toString()
+        prefs.edit().putString(key,id).apply()
+        return id
+    }
+    fun clearDraftDetails(workoutId: String) {
+        prefs.edit().remove("draft_details_${userId}_$workoutId")
+            .remove("session_uuid_${userId}_$workoutId").apply()
+    }
+
 
     private fun send(path: String, verb: String = "GET", body: String? = null, useAuth: Boolean = true, extra: Map<String,String> = emptyMap()): String {
         require(BuildConfig.SUPABASE_KEY.isNotEmpty()) { "Supabase publishable key is not configured for this build." }
@@ -200,7 +219,7 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
         if(draft.isNotBlank()) ItemCard("Unfinished workout","Draft stored on this device","Resume"){selected=draft}
         workouts.forEach { w -> ItemCard(rowTitle(w),"Day "+w.optInt("day_number",0),"Start"){selected=w.s("id")} }
         if(selected.isNotBlank()) {
-            SessionPanel(api,selected,{selected="";draft=api.draftGet()},run)
+            SessionNative(api,selected,{selected="";draft=api.draftGet()},run)
         }
         Spacer(Modifier.height(14.dp))
         Text("Recent visits",fontWeight=FontWeight.Bold)
