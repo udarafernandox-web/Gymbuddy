@@ -113,7 +113,7 @@ class GymApi(private val context: Context) {
     suspend fun upsert(table: String, conflict: String, obj: JSONObject): Unit = withContext(Dispatchers.IO) {
         send("/rest/v1/$table?on_conflict=$conflict","POST",obj.toString(),extra=mapOf("Prefer" to "resolution=merge-duplicates,return=minimal"))
     }
-    suspend fun finish(workoutId: String, entries: JSONArray, duration: Int, sessionId: String) = withContext(Dispatchers.IO) {
+    suspend fun finish(workoutId: String, entries: JSONArray, duration: Int, sessionId: String): Unit = withContext(Dispatchers.IO) {
         val workout=rows("workouts","&id=eq.$workoutId").firstOrNull()
             ?: throw IllegalStateException("Workout not found")
         val payload=JSONObject().put("_workout_id",workoutId).put("_name",workout.s("name"))
@@ -226,7 +226,23 @@ private fun rowTitle(o: JSONObject, field: String = "name") = o.s(field).ifBlank
                 }
             }
             Text("Changes stay on this device until saved.",color=muted,fontSize=12.sp)
-            Button(onClick={ {run { val entries=JSONArray();mySets.filter { done[it.s("id")]==true }.forEach {s-> entries.put(JSONObject().put("exercise",exercises.firstOrNull{it.s("id")==s.s("workout_exercise_id")}?.s("name")?:"Exercise").put("weight",s.n("weight_kg")).put("reps",s.optInt("reps"))) };api.finish(workoutId,entries,0,UUID.randomUUID().toString()) }},enabled=done.values.any{it}) {Text("Save completed workout")}
+            Button(
+                onClick = {
+                    run {
+                        val entries = JSONArray()
+                        mySets.filter { done[it.s("id")] == true }.forEach { set ->
+                            val exercise = exercises.firstOrNull { it.s("id") == set.s("workout_exercise_id") }
+                            entries.put(
+                                JSONObject().put("exercise", exercise?.s("name") ?: "Exercise")
+                                    .put("weight", set.n("weight_kg"))
+                                    .put("reps", set.optInt("reps"))
+                            )
+                        }
+                        api.finish(workoutId, entries, 0, UUID.randomUUID().toString())
+                    }
+                },
+                enabled = done.values.any { it }
+            ) { Text("Save completed workout") }
             TextButton(onClick=onClose){Text("Close")}
         }
     }
